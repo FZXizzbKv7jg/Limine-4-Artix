@@ -1,0 +1,29 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = limine
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = linux
+Target = linux-lts
+Target = linux-hardened
+Target = linux-zen
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = amd-ucode
+Target = intel-ucode
+
+[Action]
+Description = Deploying Limine after upgrade...
+When = PostTransaction
+Exec = /usr/bin/bash -c "/usr/bin/cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTx64.EFI; /usr/bin/limine enroll-config /boot/EFI/BOOT/BOOTx64.EFI $(/usr/bin/b2sum /boot/limine.cfg | /usr/bin/cut -c1-128); /usr/bin/sh -c 'if ! /usr/bin/sbverify --list /boot/EFI/BOOT/BOOTx64.EFI 2>/dev/null | /usr/bin/grep -q \"signature certificates\";then /usr/bin/sbsign --key MOK.key --cert MOK.crt --output /boot/EFI/BOOT/BOOTx64.EFI /boot/EFI/BOOT/BOOTx64.EFI; fi';"
+Depends = sbsigntools
+Depends = findutils
+Depends = grep
