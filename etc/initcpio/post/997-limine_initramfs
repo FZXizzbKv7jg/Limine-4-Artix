@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+###
+### Inform Limine about updated Initramfs and changed Hash Values
+###
+
+for i in $(/usr/bin/find /boot/ -maxdepth 1 -name 'initramfs-*.img'); do
+
+        B2SUM=$(/usr/bin/b2sum $i | /usr/bin/cut -c1-128);
+        INITRAMFS=$(/usr/bin/basename $i);
+
+        # Clear B2SUM
+        /usr/bin/sed -E '/MODULE_PATH=boot:\/\/\/'$INITRAMFS'#/I{s/#.+/#/;}' /boot/limine.cfg -i.pacsave;
+
+        # Append new B2SUM
+        /usr/bin/sed 's/MODULE_PATH=boot:\/\/\/'$INITRAMFS'#/&'$B2SUM'/g' /boot/limine.cfg -i.pacsave;
+done
+
+
+/usr/bin/cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTx64.EFI; 
+/usr/bin/limine enroll-config /boot/EFI/BOOT/BOOTx64.EFI $(/usr/bin/b2sum /boot/limine.cfg | /usr/bin/cut -c1-128); 
+
+if ! /usr/bin/sbverify --list /boot/EFI/BOOT/BOOTx64.EFI 2>/dev/null | /usr/bin/grep -q "signature certificates"; then
+
+	/usr/bin/sbsign --key /MOK.key --cert /MOK.crt --output /boot/EFI/BOOT/BOOTx64.EFI /boot/EFI/BOOT/BOOTx64.EFI; 
+
+fi
+
